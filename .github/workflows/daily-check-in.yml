@@ -11,9 +11,7 @@ jobs:
     timeout-minutes: 30
     env:
       CI: true
-      USE_STORAGE_STATE: ${{ secrets.USE_STORAGE_STATE }}
-      LESTA_LOGIN: ${{ secrets.LESTA_LOGIN }}
-      LESTA_PASSWORD: ${{ secrets.LESTA_PASSWORD }}
+      USE_STORAGE_STATE: 'true'
       SIGNIN_URL: https://lesta.ru/id/signin/
       DAILY_CHECKIN_URL: https://tanki.su/ru/daily-check-in/
       STORAGE_STATE_PATH: playwright/.auth/user.json
@@ -35,14 +33,16 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
 
-      - name: Prepare storage state file (optional)
+      - name: Prepare storage state file (required in CI)
         shell: bash
         run: |
-          mkdir -p playwright/.auth
-          if [ -n "$STORAGE_STATE_JSON" ]; then
-            echo "$STORAGE_STATE_JSON" > "$STORAGE_STATE_PATH"
-            echo "USE_STORAGE_STATE=true" >> "$GITHUB_ENV"
+          if [ -z "$STORAGE_STATE_JSON" ]; then
+            echo "::error::STORAGE_STATE_JSON secret is required in CI. Update it from a fresh local authenticated session."
+            exit 1
           fi
+
+          mkdir -p playwright/.auth
+          echo "$STORAGE_STATE_JSON" > "$STORAGE_STATE_PATH"
 
       - name: Run daily check-in test
         run: npx playwright test tests/daily-check-in.spec.ts --project=daily-check-in
