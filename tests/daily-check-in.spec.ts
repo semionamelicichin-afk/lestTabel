@@ -12,6 +12,10 @@ function maskPassword(password: string): string {
 }
 
 test('claim first available daily reward', async ({ page }) => {
+   if (process.env.CI && !useStorageState) {
+    throw new Error('CI requires USE_STORAGE_STATE=true. Direct login in GitHub Actions may trigger CAPTCHA.');
+  }
+  
   if (!useStorageState) {
     const login = process.env.LESTA_LOGIN;
     const password = process.env.LESTA_PASSWORD;
